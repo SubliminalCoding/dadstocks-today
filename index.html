@@ -1027,6 +1027,11 @@
             <h2>Where should we send it?</h2>
           </div>
           <div class="question">
+            <label class="main" for="user-name">Your first name</label>
+            <input type="text" id="user-name" name="user-name" placeholder="John">
+            <p class="validation-error" id="name-error">What should we call you?</p>
+          </div>
+          <div class="question">
             <label class="main" for="email">Your email address</label>
             <p class="hint">Your daily briefing goes here.</p>
             <input type="email" id="email" name="email" placeholder="you@email.com">
@@ -1326,6 +1331,7 @@
       document.getElementById(id.replace('-error', '')).classList.remove('input-error');
     }
 
+    document.getElementById('user-name').addEventListener('input', () => clearError('name-error'));
     document.getElementById('email').addEventListener('input', () => clearError('email-error'));
     document.getElementById('tickers').addEventListener('input', () => clearError('tickers-error'));
 
@@ -1376,10 +1382,17 @@
     // Submit
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      const userName = document.getElementById('user-name').value.trim();
       const email = document.getElementById('email').value.trim();
       const tickers = document.getElementById('tickers').value.trim();
       let hasError = false;
 
+      if (!userName) {
+        document.getElementById('name-error').style.display = 'block';
+        document.getElementById('user-name').classList.add('input-error');
+        if (!hasError) document.getElementById('user-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hasError = true;
+      }
       if (!email) {
         document.getElementById('email-error').style.display = 'block';
         document.getElementById('email').classList.add('input-error');
@@ -1405,7 +1418,7 @@
       const lines = [
         'DADSTOCKS - MY PREFERENCES',
         '================================',
-        '', 'Email: ' + email, 'Tickers: ' + tickers,
+        '', 'Name: ' + userName, 'Email: ' + email, 'Tickers: ' + tickers,
         'Sectors: ' + (getChecked('sectors').join(', ') || '(none)'),
         'Other assets: ' + (getChecked('assets').join(', ') || '(none)'),
         '', 'Trading style: ' + getRadio('style'), 'Market events: ' + getRadio('events'),
@@ -1433,7 +1446,7 @@
       const blacklistText = getVal('blacklist');
 
       const config = {
-        name: email.split('@')[0],
+        name: userName,
         email: email,
         schedule: {
           times: deliveryTimes.length ? deliveryTimes : ['06:00'],
