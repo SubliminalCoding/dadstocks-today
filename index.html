@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DadStocks — Your Personalized Daily Stock Briefing</title>
   <meta name="description" content="Get a personalized daily stock market briefing delivered to your inbox before market open. AI-powered summaries, watchlist tracking, and market mood — built for you.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="DadStocks — Your Personalized Daily Stock Briefing">
+  <meta property="og:description" content="AI-powered daily stock briefings personalized to your watchlist, delivered before market open. Free setup, no account needed.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dadstocks.today">
+  <meta property="og:image" content="https://dadstocks.today/og-image.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DadStocks — Your Personalized Daily Stock Briefing">
+  <meta name="twitter:description" content="AI-powered daily stock briefings personalized to your watchlist. Free setup.">
+  <meta name="twitter:image" content="https://dadstocks.today/og-image.png">
+
+  <!-- Favicon (SVG) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9889;</text></svg>">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -948,6 +965,7 @@
           <span class="section-label">Preview</span>
           <h2 class="section-title">See what lands in your inbox</h2>
           <p class="section-desc">A clean, scannable briefing built around your specific holdings and trading style. No ads, no clutter.</p>
+          <a href="/sample" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:0.85rem;font-weight:500;text-decoration:none;margin-top:8px;">See full sample briefing &rarr;</a>
         </div>
         <div class="preview-card">
           <div class="preview-email-header">
@@ -997,7 +1015,10 @@
         <div class="fill" id="progress" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:3px;transition:width 0.4s;width:0%;"></div>
       </div>
 
-      <form id="questionnaire">
+      <form id="questionnaire" name="dadstocks-preferences" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="dadstocks-preferences">
+        <input type="hidden" name="config-json" id="config-json" value="">
+        <p style="display:none"><label>Don't fill this out: <input name="bot-field"></label></p>
 
         <!-- Email -->
         <div class="form-card">
@@ -1207,14 +1228,21 @@
       <div class="results" id="results">
         <div class="results-header">
           <h2>Your selections are ready!</h2>
-          <p>Copy the text below and send it to us via text or email.</p>
+          <p>Your preferences have been submitted. You can also copy the text below and send it directly.</p>
         </div>
         <div class="results-card">
           <pre id="output"></pre>
         </div>
         <button class="copy-btn" id="copy-btn">Copy to clipboard</button>
-        <button class="back-btn" id="back-btn">Back to edit my answers</button>
-        <p class="results-hint">After copying, paste it into a text message or email.</p>
+        <details style="margin-top:16px;">
+          <summary style="color:var(--text-muted);font-size:0.8rem;cursor:pointer;padding:8px 0;">Show bot config (JSON)</summary>
+          <div class="results-card" style="margin-top:8px;">
+            <pre id="config-output" style="font-size:0.75rem;"></pre>
+          </div>
+          <button class="back-btn" id="copy-json-btn" style="margin-top:8px;">Copy JSON config</button>
+        </details>
+        <button class="back-btn" id="back-btn" style="margin-top:12px;">Back to edit my answers</button>
+        <p class="results-hint">Your answers were also submitted automatically. We'll be in touch!</p>
       </div>
     </div>
   </div>
@@ -1301,6 +1329,50 @@
     document.getElementById('email').addEventListener('input', () => clearError('email-error'));
     document.getElementById('tickers').addEventListener('input', () => clearError('tickers-error'));
 
+    // News priority mapping for config
+    const NEWS_KEY_MAP = {
+      'Earnings reports': 'earnings',
+      'Economic data': 'economic_data',
+      'Fed/interest rates': 'fed_rates',
+      'Analyst upgrades/downgrades': 'analyst_ratings',
+      'Mergers/IPOs/deals': 'mergers_deals',
+      'Insider buying/selling': 'insider_trading',
+      'Political/regulatory': 'political_regulatory',
+      'Social media/retail activity': 'social_retail',
+    };
+
+    const STYLE_MAP = {
+      'Day trading': 'day',
+      'Swing trading': 'swing',
+      'Longer-term investing': 'long_term',
+      'Mix': 'mixed',
+    };
+
+    const EVENTS_MAP = {
+      'Yes, very closely': 'high',
+      'Somewhat': 'medium',
+      'Not really': 'low',
+    };
+
+    const TZ_MAP = {
+      'US/Eastern': 'America/New_York',
+      'US/Central': 'America/Chicago',
+      'US/Mountain': 'America/Denver',
+      'US/Pacific': 'America/Los_Angeles',
+    };
+
+    const DETAIL_MAP = {
+      'Headlines only': 'headlines',
+      'One-line summaries': 'one-line',
+      'Short paragraphs': 'paragraph',
+    };
+
+    const COUNT_MAP = {
+      '5-10': 8,
+      '10-20': 15,
+      '20+': 25,
+    };
+
     // Submit
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1329,39 +1401,82 @@
       const now = new Date();
       const timestamp = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
+      // Build plain text output
       const lines = [
         'DADSTOCKS - MY PREFERENCES',
         '================================',
-        '',
-        'Email: ' + email,
-        'Tickers: ' + tickers,
+        '', 'Email: ' + email, 'Tickers: ' + tickers,
         'Sectors: ' + (getChecked('sectors').join(', ') || '(none)'),
         'Other assets: ' + (getChecked('assets').join(', ') || '(none)'),
-        '',
-        'Trading style: ' + getRadio('style'),
-        'Market events: ' + getRadio('events'),
-        '',
-        'Top news types: ' + (getChecked('news').join(', ') || '(none)'),
+        '', 'Trading style: ' + getRadio('style'), 'Market events: ' + getRadio('events'),
+        '', 'Top news types: ' + (getChecked('news').join(', ') || '(none)'),
         'Exclude: ' + getVal('exclude-topics'),
-        '',
-        'Detail level: ' + getRadio('detail'),
-        'Items per email: ' + getRadio('count'),
+        '', 'Detail level: ' + getRadio('detail'), 'Items per email: ' + getRadio('count'),
         'Market mood: ' + getRadio('mood'),
-        '',
-        'Delivery times: ' + (getChecked('delivery').join(', ') || '(none)'),
-        'Timezone: ' + getRadio('timezone'),
-        'Weekends: ' + getRadio('weekends'),
+        '', 'Delivery times: ' + (getChecked('delivery').join(', ') || '(none)'),
+        'Timezone: ' + getRadio('timezone'), 'Weekends: ' + getRadio('weekends'),
         'Breaking alerts: ' + getRadio('alerts'),
-        '',
-        'Always exclude: ' + getVal('blacklist'),
-        'Always include: ' + getVal('must-include'),
+        '', 'Always exclude: ' + getVal('blacklist'), 'Always include: ' + getVal('must-include'),
         'Other notes: ' + getVal('other'),
-        '',
-        'Submitted: ' + timestamp,
-        '================================',
+        '', 'Submitted: ' + timestamp, '================================',
       ];
 
+      // Build bot-ready JSON config
+      const tickerList = tickers.split(/[,\s]+/).map(t => t.trim().toUpperCase()).filter(Boolean);
+      const deliveryTimes = getChecked('delivery').map(t => t.replace(/\s*(AM|PM)\s*ET/i, '').trim() + ':00');
+      const style = getRadio('style');
+      const events = getRadio('events');
+      const tz = getRadio('timezone');
+      const detail = getRadio('detail');
+      const count = getRadio('count');
+      const excludeText = getVal('exclude-topics');
+      const blacklistText = getVal('blacklist');
+
+      const config = {
+        name: email.split('@')[0],
+        email: email,
+        schedule: {
+          times: deliveryTimes.length ? deliveryTimes : ['06:00'],
+          timezone: TZ_MAP[tz] || 'America/New_York',
+          weekends: getRadio('weekends') === 'Sunday recap',
+          weekly_recap: getRadio('weekends') === 'Sunday recap',
+        },
+        watchlist: tickerList,
+        sectors: getChecked('sectors'),
+        asset_types: getChecked('assets').map(a => a.toLowerCase().replace(/\s+/g, '_')),
+        trading_style: STYLE_MAP[style] || 'mixed',
+        events_attention: EVENTS_MAP[events] || 'medium',
+        news_priorities: getChecked('news').map(n => NEWS_KEY_MAP[n]).filter(Boolean),
+        exclusions: {
+          tickers: blacklistText !== '(none)' ? blacklistText.split(/[,]+/).map(t => t.trim().toUpperCase()).filter(Boolean) : [],
+          topics: excludeText !== '(none)' ? excludeText.split(/[,]+/).map(t => t.trim()).filter(Boolean) : [],
+        },
+        must_include: getVal('must-include') !== '(none)' ? getVal('must-include').split(/[,]+/).map(t => t.trim().toLowerCase().replace(/\s+/g, '_')).filter(Boolean) : [],
+        display: {
+          detail_level: DETAIL_MAP[detail] || 'paragraph',
+          max_items: COUNT_MAP[count] || 15,
+          market_mood: getRadio('mood') === 'Yes',
+        },
+        alerts: {
+          breaking_news: getRadio('alerts') === 'Yes',
+        },
+      };
+
+      const configJson = JSON.stringify(config, null, 2);
+
+      // Store JSON in hidden field for Netlify
+      document.getElementById('config-json').value = configJson;
+
+      // Submit to Netlify in background
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(form)).toString()
+      }).catch(() => {}); // silent fail is fine, we have copy/paste fallback
+
+      // Show results
       document.getElementById('output').textContent = lines.join('\n');
+      document.getElementById('config-output').textContent = configJson;
       form.style.display = 'none';
       document.querySelector('.progress-bar').style.display = 'none';
       document.getElementById('results').style.display = 'block';
@@ -1397,6 +1512,18 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(showCopied).catch(fallbackCopy);
       } else { fallbackCopy(); }
+    });
+
+    // Copy JSON config
+    document.getElementById('copy-json-btn').addEventListener('click', function() {
+      const text = document.getElementById('config-output').textContent;
+      const btn = this;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = 'JSON copied!';
+          setTimeout(() => { btn.textContent = 'Copy JSON config'; }, 2500);
+        }).catch(() => {});
+      }
     });
 
     // Back to edit
