@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DadStocks — Your Personalized Daily Stock Briefing</title>
+  <meta name="description" content="Get a personalized daily stock market briefing delivered to your inbox before market open. AI-powered summaries, watchlist tracking, and market mood — built for you.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base: #0a0e1a;
+      --bg-elevated: #0f1629;
+      --bg-card: #111827;
+      --bg-input: #0d1117;
+      --bg-hover: #1a2233;
+      --bg-selected: rgba(56, 189, 248, 0.08);
+      --border: #1e293b;
+      --border-hover: #334155;
+      --border-active: #38bdf8;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --accent-deep: #0ea5e9;
+      --purple: #818cf8;
+      --purple-glow: rgba(129, 140, 248, 0.15);
+      --success: #4ade80;
+      --success-glow: rgba(74, 222, 128, 0.15);
+      --orange: #fb923c;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,0.4);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .container--narrow {
+      max-width: 640px;
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      padding: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text span {
+      color: var(--accent);
+    }
+
+    .nav-cta {
+      padding: 8px 20px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+
+    .nav-cta:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.15);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--success);
+      margin-bottom: 28px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+    }
+
+    .hero-sub {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== TICKER STRIP ===== */
+    .ticker-strip {
+      overflow: hidden;
+      padding: 20px 0;
+      margin: 20px 0 60px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 48px;
+      animation: scroll 30s linear infinite;
+      width: max-content;
+    }
+
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .ticker-symbol {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .ticker-price {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .ticker-change.up { color: var(--success); }
+    .ticker-change.down { color: #f87171; }
+
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .section {
+      padding: 80px 0;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      max-width: 520px;
+      margin-bottom: 48px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: all var(--transition);
+    }
+
+    .step:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ===== FEATURES ===== */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .feature {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all var(--transition);
+    }
+
+    .feature:hover {
+      border-color: var(--border-hover);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+
+    .feature-icon.blue { background: var(--accent-glow); }
+    .feature-icon.purple { background: var(--purple-glow); }
+    .feature-icon.green { background: var(--success-glow); }
+    .feature-icon.orange { background: rgba(251, 146, 60, 0.1); }
+
+    .feature h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .feature p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ===== EMAIL PREVIEW ===== */
+    .preview-section {
+      padding: 80px 0;
+    }
+
+    .preview-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .preview-text {
+      max-width: 420px;
+    }
+
+    .preview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .preview-email-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .preview-email-header h4 {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .preview-email-header p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .preview-mood {
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+
+    .preview-mood-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .preview-tickers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .preview-ticker {
+      font-size: 0.75rem;
+    }
+
+    .preview-ticker strong {
+      color: var(--text-primary);
+    }
+
+    .preview-item {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .preview-item:last-child {
+      border-bottom: none;
+    }
+
+    .preview-item-badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
+    .preview-item-meta {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .preview-item h5 {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 6px 0 4px;
+      line-height: 1.4;
+    }
+
+    .preview-item p {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== FORM SECTION ===== */
+    .form-section {
+      padding: 80px 0 100px;
+    }
+
+    .form-section .section-title {
+      text-align: center;
+    }
+
+    .form-section .section-desc {
+      text-align: center;
+      margin: 0 auto 48px;
+    }
+
+    .form-section .section-label {
+      display: block;
+      text-align: center;
+    }
+
+    /* Form card styles */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .form-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .form-card-number {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .form-card h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .question {
+      margin-bottom: 28px;
+    }
+
+    .question:last-child {
+      margin-bottom: 0;
+    }
+
+    .question label.main {
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .question .hint {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+    }
+
+    .question .limit-hint {
+      display: inline-block;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .limit-counter {
+      display: inline-block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    input[type="text"], input[type="email"], textarea {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input[type="text"]::placeholder, input[type="email"]::placeholder, textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="text"]:focus, input[type="email"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea { resize: vertical; min-height: 72px; }
+
+    .checkbox-group, .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .checkbox-group label, .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      transition: all var(--transition);
+      user-select: none;
+    }
+
+    .checkbox-group label:hover, .radio-group label:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-hover);
+    }
+
+    .checkbox-group label:has(input:checked),
+    .radio-group label:has(input:checked) {
+      border-color: var(--border-active);
+      background: var(--bg-selected);
+    }
+
+    .checkbox-group label span, .radio-group label span {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .checkbox-group input:checked + span,
+    .radio-group input:checked + span {
+      color: var(--text-primary);
+    }
+
+    input[type="checkbox"], input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--border-hover);
+      border-radius: 5px;
+      background: transparent;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      cursor: pointer;
+    }
+
+    input[type="radio"] { border-radius: 50%; }
+
+    input[type="checkbox"]:checked, input[type="radio"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border: solid var(--bg-base);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-0.5px, -0.5px);
+    }
+
+    input[type="radio"]:checked::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--bg-base);
+      border-radius: 50%;
+    }
+
+    .grid-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .grid-group label { padding: 9px 12px; }
+    .grid-group label span { font-size: 0.825rem; }
+
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 0 30px var(--accent-glow);
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .validation-error { color: #f87171; font-size: 0.8rem; margin-top: 6px; display: none; }
+    .input-error { border-color: #f87171 !important; }
+    .limit-reached { background: rgba(248, 113, 113, 0.1) !important; color: #f87171 !important; }
+    .news-disabled { opacity: 0.4; pointer-events: none; }
+
+    /* Results */
+    .results {
+      display: none;
+      animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-header { text-align: center; margin-bottom: 24px; }
+    .results-header h2 { color: var(--success); font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+    .results-header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+    .results-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .results-card pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .copy-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--success), #22d3ee);
+      color: #0a0e1a;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 0 20px var(--success-glow);
+    }
+
+    .copy-btn:hover { box-shadow: 0 0 30px rgba(74, 222, 128, 0.25); transform: translateY(-1px); }
+    .copy-btn.copied { background: var(--success); }
+
+    .back-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 10px;
+    }
+
+    .back-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+    .results-hint { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 16px; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .steps { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .preview-wrapper { grid-template-columns: 1fr; }
+      .preview-text { max-width: 100%; }
+      .hero { padding: 50px 0 40px; }
+      .section { padding: 50px 0; }
+      .grid-group { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="container">
+    <nav>
+      <a href="#" class="logo">
+        <div class="logo-icon">&#9889;</div>
+        <div class="logo-text">Dad<span>Stocks</span></div>
+      </a>
+      <a href="#get-started" class="nav-cta">Get your briefing</a>
+    </nav>
+  </div>
+
+  <!-- HERO -->
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">Free personalized setup</div>
+      <h1>Your daily stock briefing,<br><span class="gradient">delivered before market open</span></h1>
+      <p>A personalized morning email with the news that matters to your portfolio. AI-powered summaries, watchlist tracking, and market mood. Built around how you trade.</p>
+      <a href="#get-started" class="hero-cta">Set up your briefing</a>
+      <p class="hero-sub">Takes about 5 minutes. No account needed.</p>
+    </div>
+  </div>
+
+  <!-- TICKER STRIP -->
+  <div class="ticker-strip">
+    <div class="ticker-track">
+      <div class="ticker-item"><span class="ticker-symbol">AAPL</span> <span class="ticker-price">$252.89</span> <span class="ticker-change up">+0.1%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NVDA</span> <span class="ticker-price">$171.24</span> <span class="ticker-change down">-4.2%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TSLA</span> <span class="ticker-price">$372.11</span> <span class="ticker-change down">-3.6%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">SPY</span> <span class="ticker-price">$645.09</span> <span class="ticker-change down">-1.8%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">AMZN</span> <span class="ticker-price">$197.34</span> <span class="ticker-change up">+1.2%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">META</span> <span class="ticker-price">$601.78</span> <span class="ticker-change up">+0.8%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">GOOGL</span> <span class="ticker-price">$165.21</span> <span class="ticker-change down">-0.5%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">QQQ</span> <span class="ticker-price">$573.79</span> <span class="ticker-change down">-2.4%</span></div>
+      <!-- Duplicate for seamless scroll -->
+      <div class="ticker-item"><span class="ticker-symbol">AAPL</span> <span class="ticker-price">$252.89</span> <span class="ticker-change up">+0.1%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NVDA</span> <span class="ticker-price">$171.24</span> <span class="ticker-change down">-4.2%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TSLA</span> <span class="ticker-price">$372.11</span> <span class="ticker-change down">-3.6%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">SPY</span> <span class="ticker-price">$645.09</span> <span class="ticker-change down">-1.8%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">AMZN</span> <span class="ticker-price">$197.34</span> <span class="ticker-change up">+1.2%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">META</span> <span class="ticker-price">$601.78</span> <span class="ticker-change up">+0.8%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">GOOGL</span> <span class="ticker-price">$165.21</span> <span class="ticker-change down">-0.5%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">QQQ</span> <span class="ticker-price">$573.79</span> <span class="ticker-change down">-2.4%</span></div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="container">
+    <div class="section">
+      <span class="section-label">How it works</span>
+      <h2 class="section-title">Three steps to your daily briefing</h2>
+      <p class="section-desc">No apps to install, no accounts to create. Just tell us what you follow and we handle the rest.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Tell us what you trade</h3>
+          <p>Fill out a quick questionnaire with your tickers, sectors, trading style, and how you want your briefing delivered.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>We build your config</h3>
+          <p>Your preferences become a custom filter that watches the market for exactly what matters to you. Nothing more, nothing less.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Wake up to your briefing</h3>
+          <p>Every morning, a personalized email lands in your inbox with AI-written summaries of the stories that affect your positions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="container">
+    <div class="section">
+      <span class="section-label">What you get</span>
+      <h2 class="section-title">Everything a trader needs, nothing they don't</h2>
+      <p class="section-desc">Built by traders who got tired of information overload.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon blue">&#128202;</div>
+          <h3>Watchlist tracking</h3>
+          <p>Any news mentioning your tickers gets surfaced automatically. No more searching for what matters.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon purple">&#129302;</div>
+          <h3>AI-powered summaries</h3>
+          <p>Each story gets a 2-3 sentence summary focused on price impact, catalysts, and what to watch next.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon green">&#128200;</div>
+          <h3>Market mood</h3>
+          <p>Quick snapshot of where the market stands. Major indices, your watchlist moves, and overall sentiment.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon orange">&#9888;&#65039;</div>
+          <h3>Smart filtering</h3>
+          <p>Duplicate stories collapsed, low-quality sources deprioritized, stale news dropped. Signal over noise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL PREVIEW -->
+  <div class="container">
+    <div class="preview-section">
+      <div class="preview-wrapper">
+        <div class="preview-text">
+          <span class="section-label">Preview</span>
+          <h2 class="section-title">See what lands in your inbox</h2>
+          <p class="section-desc">A clean, scannable briefing built around your specific holdings and trading style. No ads, no clutter.</p>
+        </div>
+        <div class="preview-card">
+          <div class="preview-email-header">
+            <h4>Good morning, Dad</h4>
+            <p>Thursday, March 26, 2026 at 6:00 AM</p>
+          </div>
+          <div class="preview-mood">
+            <div class="preview-mood-title">Market Mood</div>
+            <div class="preview-tickers">
+              <span class="preview-ticker"><strong>AAPL</strong> <span class="ticker-change up">+0.1%</span></span>
+              <span class="preview-ticker"><strong>NVDA</strong> <span class="ticker-change down">-4.2%</span></span>
+              <span class="preview-ticker"><strong>TSLA</strong> <span class="ticker-change down">-3.6%</span></span>
+              <span class="preview-ticker"><strong>SPY</strong> <span class="ticker-change down">-1.8%</span></span>
+            </div>
+          </div>
+          <div class="preview-item">
+            <span class="preview-item-badge">NVDA</span>
+            <span class="preview-item-meta">2h ago &middot; Reuters</span>
+            <h5>Nvidia faces lawsuit over $1B in undisclosed crypto mining revenue</h5>
+            <p>NVDA faces investor lawsuit; historical disclosure issue with limited near-term impact but adds litigation risk to monitor.</p>
+          </div>
+          <div class="preview-item">
+            <span class="preview-item-badge">AAPL</span>
+            <span class="preview-item-meta">4h ago &middot; Barron's</span>
+            <h5>Apple Stock Has Been Weak This Year. Why Analysts Think Better Times Are Ahead.</h5>
+            <p>Monness maintains Buy with $315 target (25% upside). New MacBook launch and iPhone loyalty cited as catalysts.</p>
+          </div>
+          <div class="preview-item">
+            <span class="preview-item-badge">TSLA</span>
+            <span class="preview-item-meta">3h ago &middot; MarketWatch</span>
+            <h5>Tesla Keeps Expanding Its Vision for Autonomous Humanoid Robots</h5>
+            <p>TSLA expanding Optimus program; long-term catalyst with high execution risk. Watch for production timelines.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM SECTION -->
+  <div class="container container--narrow" id="get-started">
+    <div class="form-section">
+      <span class="section-label">Get started</span>
+      <h2 class="section-title">Set up your briefing</h2>
+      <p class="section-desc">Fill this out and we'll build your personalized daily stock email. Takes about 5 minutes.</p>
+
+      <div class="progress-bar" style="width:100%;height:3px;background:var(--border);border-radius:3px;margin-bottom:32px;overflow:hidden;">
+        <div class="fill" id="progress" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:3px;transition:width 0.4s;width:0%;"></div>
+      </div>
+
+      <form id="questionnaire">
+
+        <!-- Email -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-number" style="background:var(--success-glow);border-color:rgba(74,222,128,0.2);color:var(--success);">!</div>
+            <h2>Where should we send your briefing?</h2>
+          </div>
+          <div class="question">
+            <label class="main" for="email">Your email address</label>
+            <p class="hint">This is where your daily briefing will be delivered.</p>
+            <input type="email" id="email" name="email" placeholder="you@email.com">
+            <p class="validation-error" id="email-error">Please enter your email so we know where to send your briefing.</p>
+          </div>
+        </div>
+
+        <!-- Section 1 -->
+        <div class="form-card" data-section="1">
+          <div class="form-card-header">
+            <div class="form-card-number">1</div>
+            <h2>What do you follow?</h2>
+          </div>
+          <div class="question">
+            <label class="main" for="tickers">Your tickers</label>
+            <p class="hint">Stocks, ETFs, or other symbols you want to track (up to 30). Separate with commas.</p>
+            <input type="text" id="tickers" name="tickers" placeholder="AAPL, NVDA, TSLA, SPY, QQQ, AMZN">
+            <p class="validation-error" id="tickers-error">Enter at least one ticker so we know what to track for you.</p>
+          </div>
+          <div class="question">
+            <label class="main">Sectors</label>
+            <p class="hint">Pick any you want broader coverage on.</p>
+            <div class="checkbox-group grid-group">
+              <label><input type="checkbox" name="sectors" value="Technology"><span>Technology</span></label>
+              <label><input type="checkbox" name="sectors" value="Semiconductors"><span>Semiconductors</span></label>
+              <label><input type="checkbox" name="sectors" value="Financials"><span>Financials</span></label>
+              <label><input type="checkbox" name="sectors" value="Energy"><span>Energy</span></label>
+              <label><input type="checkbox" name="sectors" value="Healthcare/Biotech"><span>Healthcare / Biotech</span></label>
+              <label><input type="checkbox" name="sectors" value="Consumer"><span>Consumer</span></label>
+              <label><input type="checkbox" name="sectors" value="Industrials"><span>Industrials</span></label>
+              <label><input type="checkbox" name="sectors" value="Real Estate"><span>Real Estate</span></label>
+              <label><input type="checkbox" name="sectors" value="Defense"><span>Defense</span></label>
+              <label><input type="checkbox" name="sectors" value="EV/Clean Energy"><span>EV / Clean Energy</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Anything besides US stocks?</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="assets" value="US stocks only"><span>US stocks is all I need</span></label>
+              <label><input type="checkbox" name="assets" value="Crypto"><span>Crypto</span></label>
+              <label><input type="checkbox" name="assets" value="International markets"><span>International markets</span></label>
+              <label><input type="checkbox" name="assets" value="Commodities"><span>Commodities (gold, oil, etc.)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="form-card" data-section="2">
+          <div class="form-card-header">
+            <div class="form-card-number">2</div>
+            <h2>How do you trade?</h2>
+          </div>
+          <div class="question">
+            <label class="main">Your style</label>
+            <div class="radio-group">
+              <label><input type="radio" name="style" value="Day trading"><span>Day trading (in and out same day)</span></label>
+              <label><input type="radio" name="style" value="Swing trading"><span>Swing trading (hold a few days to a couple weeks)</span></label>
+              <label><input type="radio" name="style" value="Longer-term investing"><span>Longer-term investing (weeks to months or more)</span></label>
+              <label><input type="radio" name="style" value="Mix"><span>Mix of the above</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Do you follow big market events?</label>
+            <p class="hint">Earnings, Fed meetings, jobs reports, etc.</p>
+            <div class="radio-group">
+              <label><input type="radio" name="events" value="Yes, very closely"><span>Yes, very closely</span></label>
+              <label><input type="radio" name="events" value="Somewhat"><span>Somewhat</span></label>
+              <label><input type="radio" name="events" value="Not really"><span>Not really</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="form-card" data-section="3">
+          <div class="form-card-header">
+            <div class="form-card-number">3</div>
+            <h2>What news matters most?</h2>
+          </div>
+          <div class="question">
+            <label class="main">Top news types</label>
+            <span class="limit-hint" id="news-limit">Pick up to 3</span><span class="limit-counter" id="news-counter">0/3 selected</span>
+            <div class="checkbox-group" id="news-types">
+              <label><input type="checkbox" name="news" value="Earnings reports"><span>Earnings reports</span></label>
+              <label><input type="checkbox" name="news" value="Economic data"><span>Economic data (jobs, inflation, GDP)</span></label>
+              <label><input type="checkbox" name="news" value="Fed/interest rates"><span>Fed and interest rate news</span></label>
+              <label><input type="checkbox" name="news" value="Analyst upgrades/downgrades"><span>Analyst upgrades / downgrades</span></label>
+              <label><input type="checkbox" name="news" value="Mergers/IPOs/deals"><span>Mergers, IPOs, and deals</span></label>
+              <label><input type="checkbox" name="news" value="Insider buying/selling"><span>Insider buying / selling</span></label>
+              <label><input type="checkbox" name="news" value="Political/regulatory"><span>Political / regulatory news</span></label>
+              <label><input type="checkbox" name="news" value="Social media/retail activity"><span>Social media buzz and retail trader activity</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main" for="exclude-topics">Anything to exclude?</label>
+            <p class="hint">Topics you never want to see.</p>
+            <input type="text" id="exclude-topics" name="exclude-topics" placeholder="penny stocks, crypto spam, meme stock hype">
+          </div>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="form-card" data-section="4">
+          <div class="form-card-header">
+            <div class="form-card-number">4</div>
+            <h2>How detailed should it be?</h2>
+          </div>
+          <div class="question">
+            <label class="main">Detail per story</label>
+            <div class="radio-group">
+              <label><input type="radio" name="detail" value="Headlines only"><span>Just the headlines</span></label>
+              <label><input type="radio" name="detail" value="One-line summaries"><span>One-line summary for each</span></label>
+              <label><input type="radio" name="detail" value="Short paragraphs" checked><span>A short paragraph with context</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Items per daily email</label>
+            <div class="radio-group">
+              <label><input type="radio" name="count" value="5-10"><span>5 - 10 (just the highlights)</span></label>
+              <label><input type="radio" name="count" value="10-20" checked><span>10 - 20 (good balance)</span></label>
+              <label><input type="radio" name="count" value="20+"><span>20+ (give me everything)</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Include a market mood summary?</label>
+            <p class="hint">Fear & Greed index, VIX, overall sentiment.</p>
+            <div class="radio-group">
+              <label><input type="radio" name="mood" value="Yes" checked><span>Yes</span></label>
+              <label><input type="radio" name="mood" value="No"><span>No</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="form-card" data-section="5">
+          <div class="form-card-header">
+            <div class="form-card-number">5</div>
+            <h2>When and how?</h2>
+          </div>
+          <div class="question">
+            <label class="main">Delivery times</label>
+            <p class="hint">Pick all that apply.</p>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="delivery" value="6:00 AM ET"><span>Pre-market (6:00 AM ET)</span></label>
+              <label><input type="checkbox" name="delivery" value="9:30 AM ET"><span>Market open (9:30 AM ET)</span></label>
+              <label><input type="checkbox" name="delivery" value="4:00 PM ET"><span>Market close (4:00 PM ET)</span></label>
+              <label><input type="checkbox" name="delivery" value="6:00 PM ET"><span>Evening recap (6:00 PM ET)</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Timezone</label>
+            <div class="radio-group grid-group">
+              <label><input type="radio" name="timezone" value="US/Eastern"><span>Eastern</span></label>
+              <label><input type="radio" name="timezone" value="US/Central"><span>Central</span></label>
+              <label><input type="radio" name="timezone" value="US/Mountain"><span>Mountain</span></label>
+              <label><input type="radio" name="timezone" value="US/Pacific"><span>Pacific</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Weekends</label>
+            <div class="radio-group">
+              <label><input type="radio" name="weekends" value="No" checked><span>No briefing on weekends</span></label>
+              <label><input type="radio" name="weekends" value="Sunday recap"><span>Weekly recap on Sunday</span></label>
+            </div>
+          </div>
+          <div class="question">
+            <label class="main">Breaking news alerts?</label>
+            <p class="hint">Outside your regular scheduled briefing.</p>
+            <div class="radio-group">
+              <label><input type="radio" name="alerts" value="Yes"><span>Yes, for major events (halts, emergency Fed, etc.)</span></label>
+              <label><input type="radio" name="alerts" value="No" checked><span>No, just the scheduled emails</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="form-card" data-section="6">
+          <div class="form-card-header">
+            <div class="form-card-number">6</div>
+            <h2>Anything else?</h2>
+          </div>
+          <div class="question">
+            <label class="main" for="blacklist">Always exclude</label>
+            <p class="hint">Tickers or topics that should never appear.</p>
+            <input type="text" id="blacklist" name="blacklist" placeholder="DWAC, penny stocks under $1">
+          </div>
+          <div class="question">
+            <label class="main" for="must-include">Always include</label>
+            <p class="hint">Signals that should always show up, no matter what.</p>
+            <input type="text" id="must-include" name="must-include" placeholder="any Fed announcement, any stock halt">
+          </div>
+          <div class="question">
+            <label class="main" for="other">Other preferences</label>
+            <textarea id="other" name="other" placeholder="Anything else you'd like..."></textarea>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit your preferences</button>
+      </form>
+
+      <div class="results" id="results">
+        <div class="results-header">
+          <h2>Your selections are ready!</h2>
+          <p>Copy the text below and send it to us via text or email.</p>
+        </div>
+        <div class="results-card">
+          <pre id="output"></pre>
+        </div>
+        <button class="copy-btn" id="copy-btn">Copy to clipboard</button>
+        <button class="back-btn" id="back-btn">Back to edit my answers</button>
+        <p class="results-hint">After copying, paste it into a text message or email.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>Built by <a href="https://redwooddigitalfrederick.com">Redwood Digital</a> &middot; Frederick, MD</p>
+    </div>
+  </footer>
+
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // Progress bar
+    const form = document.getElementById('questionnaire');
+    const progress = document.getElementById('progress');
+    const formCards = form.querySelectorAll('.form-card');
+    const totalSections = formCards.length;
+    const touchedSections = new Set();
+
+    formCards.forEach(card => {
+      card.addEventListener('input', () => touchedSections.add(card.dataset.section || 'email'));
+      card.addEventListener('change', () => touchedSections.add(card.dataset.section || 'email'));
+    });
+
+    function updateProgress() {
+      progress.style.width = Math.round((touchedSections.size / totalSections) * 100) + '%';
+    }
+
+    form.addEventListener('input', updateProgress);
+    form.addEventListener('change', updateProgress);
+
+    // "US stocks only" mutual exclusion
+    const assetBoxes = document.querySelectorAll('input[name="assets"]');
+    assetBoxes.forEach(box => {
+      box.addEventListener('change', () => {
+        if (box.value === 'US stocks only' && box.checked) {
+          assetBoxes.forEach(other => { if (other !== box) other.checked = false; });
+        } else if (box.value !== 'US stocks only' && box.checked) {
+          const usOnly = document.querySelector('input[name="assets"][value="US stocks only"]');
+          if (usOnly) usOnly.checked = false;
+        }
+      });
+    });
+
+    // News checkbox limit
+    const newsBoxes = document.querySelectorAll('#news-types input[type="checkbox"]');
+    const newsLimit = document.getElementById('news-limit');
+    const newsCounter = document.getElementById('news-counter');
+
+    function updateNewsState() {
+      const checked = document.querySelectorAll('#news-types input:checked');
+      const count = checked.length;
+      newsCounter.textContent = count + '/3 selected';
+      if (count >= 3) {
+        newsLimit.classList.add('limit-reached');
+        newsBoxes.forEach(box => { if (!box.checked) box.closest('label').classList.add('news-disabled'); });
+      } else {
+        newsLimit.classList.remove('limit-reached');
+        newsBoxes.forEach(box => box.closest('label').classList.remove('news-disabled'));
+      }
+    }
+
+    newsBoxes.forEach(box => {
+      box.addEventListener('change', () => {
+        if (document.querySelectorAll('#news-types input:checked').length > 3) box.checked = false;
+        updateNewsState();
+      });
+    });
+
+    // Validation
+    function clearError(id) {
+      document.getElementById(id).style.display = 'none';
+      document.getElementById(id.replace('-error', '')).classList.remove('input-error');
+    }
+
+    document.getElementById('email').addEventListener('input', () => clearError('email-error'));
+    document.getElementById('tickers').addEventListener('input', () => clearError('tickers-error'));
+
+    // Submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const tickers = document.getElementById('tickers').value.trim();
+      let hasError = false;
+
+      if (!email) {
+        document.getElementById('email-error').style.display = 'block';
+        document.getElementById('email').classList.add('input-error');
+        if (!hasError) document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hasError = true;
+      }
+      if (!tickers) {
+        document.getElementById('tickers-error').style.display = 'block';
+        document.getElementById('tickers').classList.add('input-error');
+        if (!hasError) document.getElementById('tickers').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hasError = true;
+      }
+      if (hasError) return;
+
+      const getChecked = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el => el.value);
+      const getRadio = (name) => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : '(not set)'; };
+      const getVal = (id) => document.getElementById(id).value.trim() || '(none)';
+
+      const now = new Date();
+      const timestamp = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+      const lines = [
+        'DADSTOCKS - MY PREFERENCES',
+        '================================',
+        '',
+        'Email: ' + email,
+        'Tickers: ' + tickers,
+        'Sectors: ' + (getChecked('sectors').join(', ') || '(none)'),
+        'Other assets: ' + (getChecked('assets').join(', ') || '(none)'),
+        '',
+        'Trading style: ' + getRadio('style'),
+        'Market events: ' + getRadio('events'),
+        '',
+        'Top news types: ' + (getChecked('news').join(', ') || '(none)'),
+        'Exclude: ' + getVal('exclude-topics'),
+        '',
+        'Detail level: ' + getRadio('detail'),
+        'Items per email: ' + getRadio('count'),
+        'Market mood: ' + getRadio('mood'),
+        '',
+        'Delivery times: ' + (getChecked('delivery').join(', ') || '(none)'),
+        'Timezone: ' + getRadio('timezone'),
+        'Weekends: ' + getRadio('weekends'),
+        'Breaking alerts: ' + getRadio('alerts'),
+        '',
+        'Always exclude: ' + getVal('blacklist'),
+        'Always include: ' + getVal('must-include'),
+        'Other notes: ' + getVal('other'),
+        '',
+        'Submitted: ' + timestamp,
+        '================================',
+      ];
+
+      document.getElementById('output').textContent = lines.join('\n');
+      form.style.display = 'none';
+      document.querySelector('.progress-bar').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Clipboard
+    document.getElementById('copy-btn').addEventListener('click', function() {
+      const text = document.getElementById('output').textContent;
+      const btn = this;
+      function showCopied() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy to clipboard'; btn.classList.remove('copied'); }, 2500);
+      }
+      function fallbackCopy() {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand('copy'); showCopied(); } catch (err) {
+          const range = document.createRange();
+          range.selectNodeContents(document.getElementById('output'));
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          btn.textContent = 'Text selected - copy manually';
+          setTimeout(() => { btn.textContent = 'Copy to clipboard'; }, 4000);
+        }
+        document.body.removeChild(ta);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(fallbackCopy);
+      } else { fallbackCopy(); }
+    });
+
+    // Back to edit
+    document.getElementById('back-btn').addEventListener('click', function() {
+      document.getElementById('results').style.display = 'none';
+      form.style.display = 'block';
+      document.querySelector('.progress-bar').style.display = 'block';
+      window.scrollTo({ top: document.getElementById('get-started').offsetTop, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
